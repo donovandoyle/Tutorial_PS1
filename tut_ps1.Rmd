@@ -1,0 +1,91 @@
+---
+title: "Tutorial_PS1"
+author: "Donovan Doyle"
+date: "2/18/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(dplyr)
+library(readxl)
+library(knitr)
+library(kableExtra)
+library(stringr)
+library(taRifx)
+```
+
+#Question 5
+```{r read-in, echo = FALSE}
+unzip("ps1.zip")
+
+irs <- read.csv("ps1/rawdata/irs2015.csv", stringsAsFactors = FALSE)
+str(irs)
+irs2015narrow <- irs %>%
+  select(year, state, zip5, cz, cz_name, bin, returns, agi, wages_amount, interest_amount,
+dividends_ordinary_amount, dividends_qualified_amount, capgains_amount,
+contrib_amount) %>%
+  filter(agi != "**") %>%
+  filter(wages_amount != "**") %>%
+  filter(interest_amount != "**") %>%
+  filter(dividends_ordinary_amount != "**") %>%
+  filter(dividends_qualified_amount != "**") %>%
+  filter(capgains_amount != "**") %>%
+  filter(contrib_amount != "**") %>%
+  filter(returns != "**") %>%
+  mutate(agi = parse_number(agi)) %>%
+  mutate(wages_amount = parse_number(wages_amount)) %>%
+  mutate(interest_amount = parse_number(interest_amount)) %>%
+  mutate(dividends_ordinary_amount = parse_number(dividends_ordinary_amount)) %>%
+  mutate(dividends_qualified_amount = parse_number(dividends_qualified_amount)) %>%
+  mutate(capgains_amount = parse_number(capgains_amount)) %>%
+  mutate(contrib_amount = parse_number(contrib_amount)) %>%
+  mutate(returns = parse_number(returns))
+
+glimpse(irs2015narrow)
+```
+
+# Question 6
+```{r q6, echo = FALSE}
+(irs2015_6 <- irs2015narrow %>%
+  mutate(agi_per_return = agi / returns) %>%
+  filter(state == "ma") %>%
+  select(agi_per_return) %>%
+  summary())
+```
+
+
+# Question 7
+```{r q7, echo = FALSE}
+irs2015_allreturns <- irs2015narrow %>%
+  filter(bin == "All") %>%
+  as.tibble()
+```
+
+
+# Question 8
+#For drawing the map (only has to be done once)
+install.packages("devtools")
+library(devtools)
+install_github('arilamstein/choroplethrZip@v1.5.0')
+## load libraries
+library(choroplethrZip)
+##Prep data for map: region (zip code) in one column and value (AGI/return) in second
+#Create variable "value" = agi_per_return
+irs2015_allreturns$value <- irs2015_allreturns$agi_per_return
+# Create variable "region" = zip5
+# These functions convert to character from numeric and add leading 0s to zips like 02138
+irs2015_allreturns$region <- as.character(irs2015_allreturns$zip5)
+irs2015_allreturns$region <- str_pad(irs2015_allreturns$region, 5, pad = "0")
+agi_per_zip5 <- select(irs2015_allreturns, region, value)
+#Define Boston CZ by listing all the county FIPS codes for the counties in Boston CZ
+ic_cz = c(19103, 19031, 19095, 19183, 19111, 19139, 19113)
+#Draw map using zip_choropleth function
+choro_agi_per_return = zip_choropleth(agi_per_zip5,
+ title="AGI per Return ($1000s) in Iowa City Commuting Zone in 2015",
+ num_colors=5,
+ county_zoom=ic_cz)
+choro_agi_per_return
+#Save map to the "output" folder
+ggsave("output/ic_map.png")
+
