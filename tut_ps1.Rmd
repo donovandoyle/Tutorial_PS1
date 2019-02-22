@@ -2,23 +2,30 @@
 title: "Tutorial_PS1"
 author: "Donovan Doyle"
 date: "2/18/2019"
-output: html_document
+output:
+  pdf_document: default
+  html_document: default
 ---
 
 ```{r setup, include=FALSE}
+
+#Loading libraries
 library(tidyverse)
-library(dplyr)
-library(readxl)
-library(knitr)
-library(kableExtra)
-library(stringr)
-library(taRifx)
+library("dplyr")
+library("readxl")
+library("knitr")
+library("kableExtra")
+library("stringr")
+library("taRifx")
+library(readstata13)
 ```
 
 #Question 5
 ```{r read-in, echo = FALSE}
+#Loading in data
 unzip("ps1.zip")
 
+#Tidying the data to get rid of NA's
 irs <- read.csv("ps1/rawdata/irs2015.csv", stringsAsFactors = FALSE)
 str(irs)
 irs2015narrow <- irs %>%
@@ -42,11 +49,14 @@ contrib_amount) %>%
   mutate(contrib_amount = parse_number(contrib_amount)) %>%
   mutate(returns = parse_number(returns))
 
+#Views all our variables
 glimpse(irs2015narrow)
 ```
 
 # Question 6
 ```{r q6, echo = FALSE}
+
+#Narrowing down to MA and creating our new variable
 (irs2015_6 <- irs2015narrow %>%
   mutate(agi_per_return = agi / returns) %>%
   filter(state == "ma") %>%
@@ -56,7 +66,8 @@ glimpse(irs2015narrow)
 
 
 # Question 7
-```{r q7, echo = FALSE}
+```{r q7, echo = FALSE, warning = FALSE}
+#Creating it as a tibble
 irs2015_allreturns <- irs2015narrow %>%
   filter(bin == "All") %>%
   as.tibble()
@@ -65,9 +76,11 @@ irs2015_allreturns <- irs2015narrow %>%
 # Question 8
 ```{r, include = FALSE}
 #For drawing the map (only has to be done once)
-library(choroplethr)
-library(Hmisc)
+
+irs2015_allreturns <- irs2015_allreturns %>%
+  mutate(agi_per_return = agi / returns)
 library(devtools)
+Sys.setenv(TZ = "America/New_York")
 install_github('arilamstein/choroplethrZip@v1.5.0')
 ## load libraries
 library(choroplethrZip)
@@ -88,11 +101,11 @@ choro_agi_per_return = zip_choropleth(agi_per_zip5,
  county_zoom=ic_cz)
 choro_agi_per_return
 #Save map to the "output" folder
-ggsave("output/ic_map.png")
+ggsave("ic_map.png")
 ```
 # Question 9
 ```{r, include = FALSE}
-irs2015_9 <- irs2015narrow %>%
+irs2015_allreturns <- irs2015_allreturns %>%
   mutate(wages_per_return = wages_amount / returns) %>%
   mutate(int_per_return = interest_amount / returns)
 
@@ -101,7 +114,7 @@ irs2015_allreturns$value <- irs2015_allreturns$wages_per_return
 # These functions convert to character from numeric and add leading 0s to zips like 02138
 irs2015_allreturns$region <- as.character(irs2015_allreturns$zip5)
 irs2015_allreturns$region <- str_pad(irs2015_allreturns$region, 5, pad = "0")
-agi_per_zip5 <- select(irs2015_allreturns, region, value)
+wages_per_zip5 <- select(irs2015_allreturns, region, value)
 #Define Boston CZ by listing all the county FIPS codes for the counties in Boston CZ
 ic_cz = c(19103, 19031, 19095, 19183, 19111, 19139, 19113)
 #Draw map using zip_choropleth function
@@ -109,9 +122,9 @@ choro_wages_per_return = zip_choropleth(wages_per_zip5,
  title="Wages per Return ($1000s) in Iowa City Commuting Zone in 2015",
  num_colors=5,
  county_zoom=ic_cz)
-choro_agi_per_return
+choro_wages_per_return
 #Save map to the "output" folder
-ggsave("output/ic_map2.png")
+ggsave("ic_map2.png")
 
 irs2015_allreturns$value <- irs2015_allreturns$int_per_return
 # Create variable "region" = zip5
@@ -126,9 +139,9 @@ choro_int_per_return = zip_choropleth(int_per_zip5,
  title="Interest Amount per Return ($1000s) in Iowa City Commuting Zone in 2015",
  num_colors=5,
  county_zoom=ic_cz)
-choro_agi_per_return
+choro_int_per_return
 #Save map to the "output" folder
-ggsave("output/ic_map3.png")
+ggsave("ic_map3.png")
 
 ```
 
@@ -136,9 +149,9 @@ ggsave("output/ic_map3.png")
 
 # Question 10
 ```{r, include = FALSE}
-zillow <- read.dta("ps1/rawdata/zillow.dta")
+zillow <- read.dta13("ps1/rawdata/zillow.dta")
 
-q10 <- left_join(irs2015_allreturns, q10, by = "zip5")
+q10 <- right_join(irs2015_allreturns, zillow, by = "zip5")
   
 ```
 Because some zip codes may be very rural and have no foreclosures take place, similar to the zip codes with the stars in the earlier data. It's likely due to them just not being big enough to have data on. 
@@ -149,18 +162,18 @@ q10$value <- q10$foreclosures
 # Create variable "region" = zip5
 # These functions convert to character from numeric and add leading 0s to zips like 02138
 q10$region <- as.character(q10$zip5)
-q10$region <- str_pad(q10s$region, 5, pad = "0")
+q10$region <- str_pad(q10$region, 5, pad = "0")
 fc_per_zip5 <- select(q10, region, value)
 #Define Boston CZ by listing all the county FIPS codes for the counties in Boston CZ
-ic_cz = c(19103, 19031, 19095, 19183, 19111, 19139, 19113)
+boston_cz = c(25001, 25009, 25017, 25021, 25023, 25025, 25027)
 #Draw map using zip_choropleth function
 choro_fc_per_return = zip_choropleth(fc_per_zip5,
- title="Foreclosures in Iowa City Commuting Zone in 2015",
+ title="Foreclosures in Massachusetts Commuting Zone in 2015",
  num_colors=5,
- county_zoom=ic_cz)
-choro_agi_per_return
+ county_zoom=boston_cz)
+choro_fc_per_return
 #Save map to the "output" folder
-ggsave("output/ic_map4.png")
+ggsave("boston_map.png")
 ```
-
+I use Massachusetts because there's not enough Zillow data in my hometown. 
 

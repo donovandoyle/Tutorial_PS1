@@ -97,6 +97,9 @@ img {
 button.code-folding-btn:focus {
   outline: none;
 }
+summary {
+  display: list-item;
+}
 </style>
 
 
@@ -104,14 +107,74 @@ button.code-folding-btn:focus {
 <div class="container-fluid main-container">
 
 <!-- tabsets -->
+
+<style type="text/css">
+.tabset-dropdown > .nav-tabs {
+  display: inline-table;
+  max-height: 500px;
+  min-height: 44px;
+  overflow-y: auto;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs > li.active:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
+  content: "";
+  border: none;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs > li.active {
+  display: block;
+}
+
+.tabset-dropdown > .nav-tabs > li > a,
+.tabset-dropdown > .nav-tabs > li > a:focus,
+.tabset-dropdown > .nav-tabs > li > a:hover {
+  border: none;
+  display: inline-block;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li {
+  display: block;
+  float: none;
+}
+
+.tabset-dropdown > .nav-tabs > li {
+  display: none;
+}
+</style>
+
 <script>
 $(document).ready(function () {
   window.buildTabsets("TOC");
 });
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open')
+  });
+});
 </script>
 
 <!-- code folding -->
-
 
 
 
@@ -267,9 +330,16 @@ $(document).ready(function () {
 <div id="question-8" class="section level1">
 <h1>Question 8</h1>
 </div>
-<div id="for-drawing-the-map-only-has-to-be-done-once" class="section level1">
-<h1>For drawing the map (only has to be done once)</h1>
-<p>install.packages(“devtools”) library(devtools) install_github(‘<a href="mailto:arilamstein/choroplethrZip@v1.5.0">arilamstein/choroplethrZip@v1.5.0</a>’) ## load libraries library(choroplethrZip) ##Prep data for map: region (zip code) in one column and value (AGI/return) in second #Create variable “value” = agi_per_return irs2015_allreturns<span class="math inline">\(value &lt;- irs2015_allreturns\)</span>agi_per_return # Create variable “region” = zip5 # These functions convert to character from numeric and add leading 0s to zips like 02138 irs2015_allreturns<span class="math inline">\(region &lt;- as.character(irs2015_allreturns\)</span>zip5) irs2015_allreturns<span class="math inline">\(region &lt;- str_pad(irs2015_allreturns\)</span>region, 5, pad = “0”) agi_per_zip5 &lt;- select(irs2015_allreturns, region, value) #Define Boston CZ by listing all the county FIPS codes for the counties in Boston CZ ic_cz = c(19103, 19031, 19095, 19183, 19111, 19139, 19113) #Draw map using zip_choropleth function choro_agi_per_return = zip_choropleth(agi_per_zip5, title=“AGI per Return ($1000s) in Iowa City Commuting Zone in 2015”, num_colors=5, county_zoom=ic_cz) choro_agi_per_return #Save map to the “output” folder ggsave(“output/ic_map.png”)</p>
+<div id="question-9" class="section level1">
+<h1>Question 9</h1>
+</div>
+<div id="question-10" class="section level1">
+<h1>Question 10</h1>
+<p>Because some zip codes may be very rural and have no foreclosures take place, similar to the zip codes with the stars in the earlier data. It’s likely due to them just not being big enough to have data on.</p>
+</div>
+<div id="question-11" class="section level1">
+<h1>Question 11</h1>
+<p>I use Massachusetts because there’s not enough Zillow data in my hometown.</p>
 </div>
 
 
